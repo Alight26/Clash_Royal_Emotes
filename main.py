@@ -5,6 +5,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from emotes import * 
 import imageio 
+from playsound import playsound
 
 # Accessing the hand object 
 mp_hands = mp.solutions.hands 
@@ -20,6 +21,8 @@ mp_drawing_styles = mp.solutions.drawing_styles
 happy_barb_path = "clash-royale-happy.gif"
 happy_barb_frames = imageio.mimread(happy_barb_path)
 
+sad_king_path = "sad_king.gif"
+sad_king_frames = imageio.mimread(sad_king_path)
 
 
 # Face detection using HaarCascades 
@@ -30,9 +33,15 @@ frames_bgr = []
 for frame in happy_barb_frames:
         frames_bgr.append(cv.cvtColor(frame, cv.COLOR_RGB2BGR))
 
+king_frames = []
+for frame in sad_king_frames:
+    king_frames.append(cv.cvtColor(frame, cv.COLOR_RGB2BGR))
+    
 # Screen Capture
 idx = 0
+king_idx = 0
 happy_displayed = False
+sad_displayed = False
 cap = cv.VideoCapture(0)
 with mp_hands.Hands(
     model_complexity=0,
@@ -99,8 +108,30 @@ with mp_hands.Hands(
 
             if not happy_displayed:
                 cv.destroyWindow("happy_barb")
+
+
+            # Sad King 
+            if right_landmark[4].y < right_landmark[8].y and left_landmark[4].y < left_landmark[8].y:
+                sad_displayed = True 
+            else:
+                sad_displayed = False
+
+            if sad_displayed and not happy_displayed:
+                            
+                frame = king_frames[king_idx]
+                cv.imshow('sad_king', frame)
+                king_idx = (king_idx + 1) % len(king_frames)
+
+            if not sad_displayed:
+                cv.destroyWindow('sad_king')
+                            
+
+
+
+
         else:
             happy_displayed = False
+            sad_displayed + False
 
 
         # For Emotion Detection
