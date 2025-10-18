@@ -1,9 +1,6 @@
 import cv2 as cv 
-from deepface import DeepFace
 import mediapipe as mp 
-from mediapipe.tasks import python 
-from mediapipe.tasks.python import vision
-from emotes import * 
+import imageio 
 
 # Accessing the hand object 
 mp_hands = mp.solutions.hands 
@@ -14,17 +11,21 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles 
 
 # All Emote gesture functions 
-def happy_barbarian():
-            
-    happy_barb = cv.imread("Emotes/clash-royale-happy.gif")
-    cv.imshow('Happy_Barb', happy_barb)
+
+# Getting gif images 
+happy_barb_path = "clash-royale-happy.gif"
+happy_barb_frames = imageio.mimread(happy_barb_path)
 
 
 
-# Face detection using HaarCascades 
-detector = cv.CascadeClassifier('haarcascade_frontalFace_default.xml')
+# Converting gif frames 
+frames_bgr = []
+for frame in happy_barb_frames:
+        frames_bgr.append(cv.cvtColor(frame, cv.COLOR_RGB2BGR))
 
 # Screen Capture
+i = 0
+happy_displayed = False
 cap = cv.VideoCapture(0)
 with mp_hands.Hands(
     model_complexity=0,
@@ -37,7 +38,7 @@ with mp_hands.Hands(
 
         # For Face 
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        faces = detector.detectMultiScale(gray, 1.3, 3)
+
 
         # For Hands 
         RGB_frame = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -71,33 +72,28 @@ with mp_hands.Hands(
                     right_landmark = right_hand_landmarks.landmark
                     left_landmark = left_hand_landmarks.landmark
 
+                    
+                
+                    if right_landmark[12].y < right_landmark[9].y and left_landmark[12].y < left_landmark[9].y:
+                        happy_displayed = True
+
+                            
+                           
+                    else:
+                        happy_displayed = False
+                else:
                     happy_displayed = False
+
+                # Should show gif please work this time
+                if happy_displayed:
+                    frame = frames_bgr[i]
+                    cv.imshow('happy_barb', frame)
+                    i = (i + 1) % len(frames_bgr)
+
+                else:
+                    if cv.getWindowProperty("happy_barb", cv.WND_PROP_VISIBLE) >= 1:
+                        cv.destroyWindow("happy_barb")
                 
-                    if right_landmark[12].y > right_landmark[9].y and left_landmark[12].y > left_landmark[9].y:
-                        if not happy_displayed:
-
-                            happy_barbarian()
-                            happy_displayed = True
-                        else:
-                            happy_displayed = False
-
-                
-
-
-        # For Emotion Detection
-        for (x, y, w, h) in faces:
-
-            roi_gray = gray[y:y+h, x:x+w]
-            roi_color = img[y:y+h, x:x+w]
-
-            # Does the Facial Analysis 
-            detection = DeepFace.analyze(roi_color, actions=['emotion'], enforce_detection=False)
-
-            # detects the most dominant emotion 
-            emotion = detection[0]['dominant_emotion']
-
-            cv.rectangle(img, (x,y), (x+w, y+h), (0, 0, 225), 2)
-            cv.putText(img, emotion, (50, 50), cv.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 1, cv.LINE_AA)
 
         img_flipped = cv.flip(img, 1)
         hand_flipped = cv.flip(RGB_frame, 1)
