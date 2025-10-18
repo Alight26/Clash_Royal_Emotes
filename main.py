@@ -13,7 +13,13 @@ mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils 
 mp_drawing_styles = mp.solutions.drawing_styles 
 
-# All Emote detector functions 
+# All Emote gesture functions 
+def happy_barbarian():
+            
+    happy_barb = cv.imread("Emotes/clash-royale-happy.gif")
+    cv.imshow('Happy_Barb', happy_barb)
+
+
 
 # Face detection using HaarCascades 
 detector = cv.CascadeClassifier('haarcascade_frontalFace_default.xml')
@@ -36,25 +42,46 @@ with mp_hands.Hands(
         # For Hands 
         RGB_frame = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         result = hands.process(RGB_frame)
+
+        # Selecting the handedness 
+        right_hand_landmarks = None 
+        left_hand_landmarks = None 
+
+
         if result.multi_hand_landmarks:
             for i, hand_landmarks in enumerate(result.multi_hand_landmarks):
-                if result.multi_handedness and i < len(result.multi_handedness):
-                    hand_type = result.multi_handedness[i].classification[0].label
-                else:
-                    hand_type = "Unknown"
-
-                if hand_type == 'Right':
+                hand_label = result.multi_handedness[i].classification[0].label
+                
+                if hand_label == "Right":
+                    right_hand_landmarks = hand_landmarks
                     mp_drawing.draw_landmarks(
-                        img, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                        img, right_hand_landmarks, mp_hands.HAND_CONNECTIONS,
                         mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
                         mp_drawing.DrawingSpec(color=(255, 0, 0), thickness=2)
                     )
-                else:
+                elif hand_label == "Left":
+                    left_hand_landmarks = hand_landmarks
                     mp_drawing.draw_landmarks(
-                        img, hand_landmarks, mp_hands.HAND_CONNECTIONS,
+                        img, left_hand_landmarks, mp_hands.HAND_CONNECTIONS,
                         mp_drawing_styles.get_default_hand_landmarks_style(),
                         mp_drawing_styles.get_default_hand_connections_style()
                     )
+
+                if right_hand_landmarks and left_hand_landmarks:
+                    right_landmark = right_hand_landmarks.landmark
+                    left_landmark = left_hand_landmarks.landmark
+
+                    happy_displayed = False
+                
+                    if right_landmark[12].y > right_landmark[9].y and left_landmark[12].y > left_landmark[9].y:
+                        if not happy_displayed:
+
+                            happy_barbarian()
+                            happy_displayed = True
+                        else:
+                            happy_displayed = False
+
+                
 
 
         # For Emotion Detection
@@ -83,3 +110,9 @@ with mp_hands.Hands(
         k = cv.waitKey(1) & 0xff
         if k == ord('q'):
             break
+
+
+
+
+
+
